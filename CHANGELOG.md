@@ -6,6 +6,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-27
+
+### Fixed
+
+- Fixed `homeassistant` version format in `hacs.json` to CalVer without operator prefix (`2026.5.0`), resolving `AwesomeVersionCompareException` during HACS download.
+
 ## [0.1.1] - 2026-09-27
 
 ### Changed

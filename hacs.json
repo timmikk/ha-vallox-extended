@@ -1,6 +1,6 @@
 {
   "name": "Extended read-only Vallox telemetry",
-  "homeassistant": ">=2026.5.0",
+  "homeassistant": "2026.5.0",
   "content_in_root": false,
   "zip_release": false,
   "render_readme": true
