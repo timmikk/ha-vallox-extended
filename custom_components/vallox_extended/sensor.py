@@ -96,6 +96,64 @@ class ValloxExtendedNextFilterChangeDateSensor(ValloxExtendedSensor):
         return self.coordinator.data.metric_data.next_filter_change_date
 
 
+VALLOX_CELL_STATE_MAP = {
+    0: "heat_recovery",
+    1: "cool_recovery",
+    2: "bypass",
+    3: "defrost",
+}
+
+VALLOX_SUPPLY_HEATING_ADJUST_MODE_MAP = {
+    0: "supply",
+    1: "extract",
+    2: "cooling",
+}
+
+VALLOX_DEFROST_MODE_MAP = {
+    0: "bypass",
+    1: "fanstop",
+}
+
+
+class ValloxExtendedCellStateSensor(ValloxExtendedSensor):
+    """Sensor exposing current cell state."""
+
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["heat_recovery", "cool_recovery", "bypass", "defrost"]
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    @property
+    def native_value(self) -> str | None:
+        val = super().native_value
+        return VALLOX_CELL_STATE_MAP.get(val)
+
+
+class ValloxExtendedSupplyHeatingAdjustModeSensor(ValloxExtendedSensor):
+    """Sensor exposing supply heating adjust mode."""
+
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["supply", "extract", "cooling"]
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    @property
+    def native_value(self) -> str | None:
+        val = super().native_value
+        return VALLOX_SUPPLY_HEATING_ADJUST_MODE_MAP.get(val)
+
+
+class ValloxExtendedDefrostModeSensor(ValloxExtendedSensor):
+    """Sensor exposing defrost mode."""
+
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["bypass", "fanstop"]
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    @property
+    def native_value(self) -> str | None:
+        val = super().native_value
+        return VALLOX_DEFROST_MODE_MAP.get(val)
+
+
 class ValloxExtendedFaultCountSensor(ValloxExtendedSensor):
     """Expose a read-only Vallox fault counter."""
 
@@ -274,6 +332,25 @@ MAINTENANCE_SENSORS: tuple[ValloxExtendedSensorEntityDescription, ...] = (
     ),
 )
 
+MODE_DIAGNOSTIC_SENSORS: tuple[ValloxExtendedSensorEntityDescription, ...] = (
+    ValloxExtendedSensorEntityDescription(
+        key="supply_air_defrost_temp",
+        name="Supply air defrost limit",
+        metric_key="A_CYC_SUPPLY_AIR_DEFROST_TEMP",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    ValloxExtendedSensorEntityDescription(
+        key="post_heater_winter_setpoint",
+        name="Post-heater winter setpoint",
+        metric_key="A_CYC_POST_HEATER_WINTER_SETPOINT",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+)
+
 
 async def async_setup_entry(
     _hass, entry, async_add_entities: AddEntitiesCallback
@@ -308,18 +385,43 @@ async def async_setup_entry(
     entities.extend(
         ValloxExtendedSensor(coordinator, desc) for desc in MAINTENANCE_SENSORS
     )
-    entities.append(
-        ValloxExtendedNextFilterChangeDateSensor(
-            coordinator,
-            ValloxExtendedSensorEntityDescription(
-                key="next_filter_change_date",
-                name="Next filter change date",
-                device_class=SensorDeviceClass.DATE,
-            ),
-        )
+    entities.extend(
+        ValloxExtendedSensor(coordinator, desc) for desc in MODE_DIAGNOSTIC_SENSORS
     )
     entities.extend(
         [
+            ValloxExtendedCellStateSensor(
+                coordinator,
+                ValloxExtendedSensorEntityDescription(
+                    key="cell_state",
+                    name="Cell state",
+                    metric_key="A_CYC_CELL_STATE",
+                ),
+            ),
+            ValloxExtendedSupplyHeatingAdjustModeSensor(
+                coordinator,
+                ValloxExtendedSensorEntityDescription(
+                    key="supply_heating_adjust_mode",
+                    name="Supply heating adjust mode",
+                    metric_key="A_CYC_SUPPLY_HEATING_ADJUST_MODE",
+                ),
+            ),
+            ValloxExtendedDefrostModeSensor(
+                coordinator,
+                ValloxExtendedSensorEntityDescription(
+                    key="defrost_mode",
+                    name="Defrost mode",
+                    metric_key="A_CYC_DEFROST_MODE",
+                ),
+            ),
+            ValloxExtendedNextFilterChangeDateSensor(
+                coordinator,
+                ValloxExtendedSensorEntityDescription(
+                    key="next_filter_change_date",
+                    name="Next filter change date",
+                    device_class=SensorDeviceClass.DATE,
+                ),
+            ),
             ValloxExtendedCO2Sensor(
                 coordinator,
                 ValloxExtendedSensorEntityDescription(

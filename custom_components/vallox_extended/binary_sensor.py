@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from typing import Any
+
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
 from homeassistant.const import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -37,6 +42,46 @@ class ValloxExtendedBinarySensor(ValloxExtendedEntity, BinarySensorEntity):
         return value == self._expected if value in self._valid_values else None
 
 
+class ValloxExtendedFaultActiveBinarySensor(ValloxExtendedBinarySensor):
+    """Fault active binary sensor with detailed alarm attributes."""
+
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+
+    def __init__(
+        self,
+        coordinator: ValloxExtendedCoordinator,
+    ) -> None:
+        super().__init__(
+            coordinator,
+            "fault_active",
+            "Fault active",
+            "A_CYC_FAULT_ACTIVITY",
+            1,
+            frozenset({0, 1}),
+        )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        try:
+            alarms = self.coordinator.data.metric_data.get_alarms(skip_solved=True)
+            return {
+                "active_alarms": [
+                    {
+                        "nr": a.nr,
+                        "code": a.code,
+                        "message": getattr(a, "message", None),
+                        "severity": a.severity.name if a.severity else None,
+                        "first_date": str(a.first_date) if a.first_date else None,
+                        "last_date": str(a.last_date) if a.last_date else None,
+                        "count": a.count,
+                    }
+                    for a in alarms
+                ]
+            }
+        except Exception:
+            return {"active_alarms": []}
+
+
 async def async_setup_entry(
     _hass, entry, async_add_entities: AddEntitiesCallback
 ) -> None:
@@ -68,13 +113,6 @@ async def async_setup_entry(
                 1,
                 frozenset({0, 1}),
             ),
-            ValloxExtendedBinarySensor(
-                coordinator,
-                "fault_active",
-                "Fault active",
-                "A_CYC_FAULT_ACTIVITY",
-                1,
-                frozenset({0, 1}),
-            ),
+            ValloxExtendedFaultActiveBinarySensor(coordinator),
         ]
     )

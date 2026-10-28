@@ -276,3 +276,54 @@ async def test_filter_and_uptime_sensors(hass):
     assert state is not None
     assert state.state == "5568"
     assert state.attributes["unit_of_measurement"] == "h"
+
+
+@pytest.mark.asyncio
+async def test_operating_modes_and_diagnostics(hass):
+    """Test cell state, supply heating mode, defrost mode, and setpoint diagnostics."""
+    mock_metrics = {key: 0 for key in ALLOWED_METRICS}
+    mock_metrics.update(
+        {
+            "A_CYC_CELL_STATE": 2,
+            "A_CYC_SUPPLY_HEATING_ADJUST_MODE": 0,
+            "A_CYC_DEFROST_MODE": 0,
+            "A_CYC_SUPPLY_AIR_DEFROST_TEMP": 12.0,
+            "A_CYC_POST_HEATER_WINTER_SETPOINT": 5.0,
+        }
+    )
+
+    client = type(
+        "Client",
+        (),
+        {
+            "fetch_metrics": AsyncMock(return_value=mock_metrics),
+        },
+    )()
+    entry = MockConfigEntry(domain=DOMAIN, data={CONF_HOST: "192.0.2.1"})
+    entry.add_to_hass(hass)
+
+    with patch("custom_components.vallox_extended.Vallox", return_value=client):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.vallox_extended_cell_state")
+    assert state is not None
+    assert state.state == "bypass"
+
+    state = hass.states.get("sensor.vallox_extended_supply_heating_adjust_mode")
+    assert state is not None
+    assert state.state == "supply"
+
+    state = hass.states.get("sensor.vallox_extended_defrost_mode")
+    assert state is not None
+    assert state.state == "bypass"
+
+    state = hass.states.get("sensor.vallox_extended_supply_air_defrost_limit")
+    assert state is not None
+    assert state.state == "12.0"
+    assert state.attributes["unit_of_measurement"] == "°C"
+
+    state = hass.states.get("sensor.vallox_extended_post_heater_winter_setpoint")
+    assert state is not None
+    assert state.state == "5.0"
+    assert state.attributes["unit_of_measurement"] == "°C"
