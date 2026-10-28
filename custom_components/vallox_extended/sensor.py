@@ -12,6 +12,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import (
+    CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
     REVOLUTIONS_PER_MINUTE,
     EntityCategory,
@@ -57,6 +58,28 @@ class ValloxExtendedOptionalAirSensor(ValloxExtendedSensor):
     def native_value(self) -> float | None:
         val = super().native_value
         if val is None or (isinstance(val, (int, float)) and val <= -40.0):
+            return None
+        return val
+
+
+class ValloxExtendedCO2Sensor(ValloxExtendedSensor):
+    """CO2 sensor that guards against 0 ppm placeholder when no sensor is fitted."""
+
+    @property
+    def native_value(self) -> int | None:
+        val = super().native_value
+        if val is None or val == 0:
+            return None
+        return val
+
+
+class ValloxExtendedVOCSensor(ValloxExtendedSensor):
+    """VOC sensor that guards against 1000 placeholder when no sensor is fitted."""
+
+    @property
+    def native_value(self) -> int | None:
+        val = super().native_value
+        if val is None or val == 1000:
             return None
         return val
 
@@ -178,6 +201,32 @@ FAN_SENSORS: tuple[ValloxExtendedSensorEntityDescription, ...] = (
     ),
 )
 
+IAQ_SENSORS: tuple[ValloxExtendedSensorEntityDescription, ...] = (
+    ValloxExtendedSensorEntityDescription(
+        key="humidity",
+        name="Humidity",
+        metric_key="A_CYC_RH_VALUE",
+        device_class=SensorDeviceClass.HUMIDITY,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+    ),
+    ValloxExtendedSensorEntityDescription(
+        key="humidity_basic_level",
+        name="Humidity basic level",
+        metric_key="A_CYC_RH_BASIC_LEVEL",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=PERCENTAGE,
+    ),
+    ValloxExtendedSensorEntityDescription(
+        key="multisensor_humidity",
+        name="Multisensor humidity",
+        metric_key="A_CYC_MULTISENSOR_RH",
+        device_class=SensorDeviceClass.HUMIDITY,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+    ),
+)
+
 
 async def async_setup_entry(
     _hass, entry, async_add_entities: AddEntitiesCallback
@@ -207,7 +256,30 @@ async def async_setup_entry(
         ValloxExtendedSensor(coordinator, desc) for desc in FAN_SENSORS
     )
     entities.extend(
+        ValloxExtendedSensor(coordinator, desc) for desc in IAQ_SENSORS
+    )
+    entities.extend(
         [
+            ValloxExtendedCO2Sensor(
+                coordinator,
+                ValloxExtendedSensorEntityDescription(
+                    key="co2",
+                    name="Carbon dioxide",
+                    metric_key="A_CYC_CO2_VALUE",
+                    device_class=SensorDeviceClass.CO2,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+                ),
+            ),
+            ValloxExtendedVOCSensor(
+                coordinator,
+                ValloxExtendedSensorEntityDescription(
+                    key="voc_level",
+                    name="VOC level",
+                    metric_key="A_CYC_VOC_LEVEL",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                ),
+            ),
             ValloxExtendedFaultCountSensor(
                 coordinator,
                 ValloxExtendedSensorEntityDescription(
