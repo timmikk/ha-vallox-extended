@@ -1,6 +1,6 @@
 # ha-vallox-extended
 
-Extended read-only Vallox telemetry
+Complete Vallox telemetry, diagnostics, and ventilation controls.
 
 Home Assistant custom integration. Development happens on
 [git.clo.dy.fi/timo/ha-vallox-extended](https://git.clo.dy.fi/timo/ha-vallox-extended);
@@ -16,21 +16,28 @@ HACS-installable. See `info.md` for install/rollback instructions.
 - Release: tag `vX.Y.Z` on Forgejo → mirror syncs → HACS offers the version
   in the UI. A GitHub Release object is not needed.
 
-## Supported telemetry
+## Supported telemetry & controls
 
-Version 0.1.1 is intentionally a small diagnostic surface: bypass state,
-defrosting, post-heater state, active-fault indication, and current/total
-fault counters. It has no writable entities or services.
+Version 0.2.0 exposes all validated telemetry and controls available on Vallox MV units:
 
-The component accepts only an explicit allowlist of protocol metric keys. It
-does not retain or expose raw device responses: Vallox protocol responses can
-include configuration and credential-bearing fields. Metrics whose polarity,
-unit, or availability is not confirmed are left out rather than guessed.
+### Telemetry & Diagnostics
+- **Temperatures**: All 5 stream temperatures (extract, exhaust, outdoor, supply, supply cell) and optional duct temp sensor (automatically reports unavailable when disconnected at `<= -40 °C`).
+- **Heat Recovery Efficiencies**: Dual measurement sensors for supply efficiency and extract efficiency.
+- **Fan Telemetry & Motor Output**: Fan speed percentage, supply/extract fan speeds in RPM, fan balance base percentages, and motor control output duty.
+- **Air Quality & Humidity**: Relative humidity, humidity basic level, multisensor RH, plus capability-gated CO2 & VOC sensors (guards against reporting 0 ppm or placeholder 1000 when hardware is not installed).
+- **Maintenance & Machine Uptime**: Filter remaining months, filter change interval, calculated next filter change date, current uptime, and lifetime machine uptime.
+- **Operating Modes & Heating**: Cell state (heat recovery, cool recovery, bypass, defrost), supply heating adjust mode, defrost mode, supply air defrost limit, and post-heater winter setpoint.
+- **Alarms**: Active fault binary sensor with rich attribute representation (`active_alarms` listing code, severity, fault count, timestamps, and descriptive messages).
 
-This component is separate from Home Assistant's core `vallox` integration.
-Keep the core integration installed for its existing fan controls and
-automations; configure Vallox Extended with the same device IP only after its
-HACS release is installed.
+### Controls
+- **Ventilation Fan**: Full fan entity supporting preset modes (Home, Away, Boost, Fireplace, Extra) and percentage speed control.
+- **Profile Target Temperatures**: Number entities to configure target supply air temperatures for Home, Away, and Boost profiles (5.0 °C to 25.0 °C).
+- **Filter Change Date**: Date entity to inspect and update the last filter change date.
+- **Bypass Locked**: Switch entity to lock or unlock the heat-recovery bypass damper.
+
+### Security & Protocol Boundary
+
+The component accepts only an explicit allowlist of protocol metric keys in `ALLOWED_METRICS`. Credential-bearing registers (`A_CYC_MASTER_PASSWORD`, `A_CYC_PARENTAL_PASSWORD`, `A_CYC_USER_PASSWORD`) and raw device configurations are strictly rejected and never exposed or logged. All communication is 100% local websocket traffic between Home Assistant and the unit.
 
 ## Secrets policy
 
