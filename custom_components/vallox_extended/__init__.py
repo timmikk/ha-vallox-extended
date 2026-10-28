@@ -21,7 +21,14 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     return True
 
 
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.DATE]
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
+    Platform.SENSOR,
+    Platform.DATE,
+    Platform.SWITCH,
+    Platform.NUMBER,
+    Platform.FAN,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

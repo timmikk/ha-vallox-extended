@@ -21,6 +21,7 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from vallox_websocket_api import Profile
 
 from .coordinator import ValloxExtendedCoordinator
 from .entity import ValloxExtendedEntity
@@ -93,7 +94,10 @@ class ValloxExtendedNextFilterChangeDateSensor(ValloxExtendedSensor):
 
     @property
     def native_value(self) -> date | None:
-        return self.coordinator.data.metric_data.next_filter_change_date
+        try:
+            return self.coordinator.data.metric_data.next_filter_change_date
+        except (ValueError, TypeError):
+            return None
 
 
 VALLOX_CELL_STATE_MAP = {
@@ -112,6 +116,14 @@ VALLOX_SUPPLY_HEATING_ADJUST_MODE_MAP = {
 VALLOX_DEFROST_MODE_MAP = {
     0: "bypass",
     1: "fanstop",
+}
+
+PROFILE_TO_PRESET_MODE = {
+    Profile.HOME: "Home",
+    Profile.AWAY: "Away",
+    Profile.BOOST: "Boost",
+    Profile.FIREPLACE: "Fireplace",
+    Profile.EXTRA: "Extra",
 }
 
 
@@ -152,6 +164,38 @@ class ValloxExtendedDefrostModeSensor(ValloxExtendedSensor):
     def native_value(self) -> str | None:
         val = super().native_value
         return VALLOX_DEFROST_MODE_MAP.get(val)
+
+
+class ValloxExtendedProfileSensor(ValloxExtendedSensor):
+    """Sensor exposing active profile."""
+
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["Home", "Away", "Boost", "Fireplace", "Extra"]
+
+    @property
+    def native_value(self) -> str | None:
+        try:
+            profile = self.coordinator.data.metric_data.profile
+            return PROFILE_TO_PRESET_MODE.get(profile)
+        except Exception:
+            return None
+
+
+class ValloxExtendedProfileDurationSensor(ValloxExtendedSensor):
+    """Sensor exposing remaining profile duration in minutes."""
+
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfTime.MINUTES
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    @property
+    def native_value(self) -> int | None:
+        try:
+            profile = self.coordinator.data.metric_data.profile
+            return self.coordinator.data.metric_data.get_remaining_profile_duration(profile)
+        except Exception:
+            return None
 
 
 class ValloxExtendedFaultCountSensor(ValloxExtendedSensor):
@@ -390,6 +434,20 @@ async def async_setup_entry(
     )
     entities.extend(
         [
+            ValloxExtendedProfileSensor(
+                coordinator,
+                ValloxExtendedSensorEntityDescription(
+                    key="current_profile",
+                    name="Current profile",
+                ),
+            ),
+            ValloxExtendedProfileDurationSensor(
+                coordinator,
+                ValloxExtendedSensorEntityDescription(
+                    key="profile_duration",
+                    name="Profile duration",
+                ),
+            ),
             ValloxExtendedCellStateSensor(
                 coordinator,
                 ValloxExtendedSensorEntityDescription(

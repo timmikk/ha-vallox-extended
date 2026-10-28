@@ -23,7 +23,10 @@ class ValloxExtendedFilterChangeDate(ValloxExtendedEntity, DateEntity):
 
     @property
     def native_value(self) -> date | None:
-        return self.coordinator.data.metric_data.filter_change_date
+        try:
+            return self.coordinator.data.metric_data.filter_change_date
+        except (ValueError, TypeError):
+            return None
 
     async def async_set_value(self, value: date) -> None:
         await self.coordinator.client.set_filter_change_date(value)

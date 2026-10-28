@@ -289,6 +289,8 @@ async def test_operating_modes_and_diagnostics(hass):
             "A_CYC_DEFROST_MODE": 0,
             "A_CYC_SUPPLY_AIR_DEFROST_TEMP": 12.0,
             "A_CYC_POST_HEATER_WINTER_SETPOINT": 5.0,
+            "A_CYC_STATE": 0,  # Home profile
+            "A_CYC_BOOST_TIMER": 45,  # Boost active with 45 mins
         }
     )
 
@@ -327,3 +329,13 @@ async def test_operating_modes_and_diagnostics(hass):
     assert state is not None
     assert state.state == "5.0"
     assert state.attributes["unit_of_measurement"] == "°C"
+
+    # Profile sensor: Boost timer > 0 => Boost
+    state = hass.states.get("sensor.vallox_extended_current_profile")
+    assert state is not None
+    assert state.state == "Boost"
+
+    state = hass.states.get("sensor.vallox_extended_profile_duration")
+    assert state is not None
+    assert state.state == "45"
+    assert state.attributes["unit_of_measurement"] == "min"
