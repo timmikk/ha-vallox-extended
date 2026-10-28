@@ -67,3 +67,67 @@ async def test_temperatures_and_efficiencies(hass):
     assert state is not None
     assert state.state == "60"
     assert state.attributes["unit_of_measurement"] == "%"
+
+
+@pytest.mark.asyncio
+async def test_fan_telemetry_and_duty(hass):
+    """Test fan speeds, RPMs, balance base, and IO motor duties."""
+    mock_metrics = {key: 0 for key in ALLOWED_METRICS}
+    mock_metrics.update(
+        {
+            "A_CYC_FAN_SPEED": 60,
+            "A_CYC_SUPP_FAN_SPEED": 1700,
+            "A_CYC_EXTR_FAN_SPEED": 1899,
+            "A_CYC_SUPP_FAN_BALANCE_BASE": 65,
+            "A_CYC_EXTR_FAN_BALANCE_BASE": 75,
+            "A_CYC_IO_SUPPLY_FAN": 150,
+            "A_CYC_IO_EXTRACT_FAN": 169,
+        }
+    )
+
+    client = type(
+        "Client",
+        (),
+        {
+            "fetch_metrics": AsyncMock(return_value=mock_metrics),
+        },
+    )()
+    entry = MockConfigEntry(domain=DOMAIN, data={CONF_HOST: "192.0.2.1"})
+    entry.add_to_hass(hass)
+
+    with patch("custom_components.vallox_extended.Vallox", return_value=client):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.vallox_extended_fan_speed")
+    assert state is not None
+    assert state.state == "60"
+    assert state.attributes["unit_of_measurement"] == "%"
+
+    state = hass.states.get("sensor.vallox_extended_supply_fan_speed")
+    assert state is not None
+    assert state.state == "1700"
+    assert state.attributes["unit_of_measurement"] == "rpm"
+
+    state = hass.states.get("sensor.vallox_extended_extract_fan_speed")
+    assert state is not None
+    assert state.state == "1899"
+    assert state.attributes["unit_of_measurement"] == "rpm"
+
+    state = hass.states.get("sensor.vallox_extended_supply_fan_balance_base")
+    assert state is not None
+    assert state.state == "65"
+    assert state.attributes["unit_of_measurement"] == "%"
+
+    state = hass.states.get("sensor.vallox_extended_extract_fan_balance_base")
+    assert state is not None
+    assert state.state == "75"
+    assert state.attributes["unit_of_measurement"] == "%"
+
+    state = hass.states.get("sensor.vallox_extended_supply_fan_control_output")
+    assert state is not None
+    assert state.state == "150"
+
+    state = hass.states.get("sensor.vallox_extended_extract_fan_control_output")
+    assert state is not None
+    assert state.state == "169"

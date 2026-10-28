@@ -13,6 +13,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import (
     PERCENTAGE,
+    REVOLUTIONS_PER_MINUTE,
     EntityCategory,
     UnitOfTemperature,
 )
@@ -127,6 +128,56 @@ EFFICIENCY_SENSORS: tuple[ValloxExtendedSensorEntityDescription, ...] = (
     ),
 )
 
+FAN_SENSORS: tuple[ValloxExtendedSensorEntityDescription, ...] = (
+    ValloxExtendedSensorEntityDescription(
+        key="fan_speed",
+        name="Fan speed",
+        metric_key="A_CYC_FAN_SPEED",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+    ),
+    ValloxExtendedSensorEntityDescription(
+        key="supply_fan_speed",
+        name="Supply fan speed",
+        metric_key="A_CYC_SUPP_FAN_SPEED",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=REVOLUTIONS_PER_MINUTE,
+    ),
+    ValloxExtendedSensorEntityDescription(
+        key="extract_fan_speed",
+        name="Extract fan speed",
+        metric_key="A_CYC_EXTR_FAN_SPEED",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=REVOLUTIONS_PER_MINUTE,
+    ),
+    ValloxExtendedSensorEntityDescription(
+        key="supply_fan_balance_base",
+        name="Supply fan balance base",
+        metric_key="A_CYC_SUPP_FAN_BALANCE_BASE",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=PERCENTAGE,
+    ),
+    ValloxExtendedSensorEntityDescription(
+        key="extract_fan_balance_base",
+        name="Extract fan balance base",
+        metric_key="A_CYC_EXTR_FAN_BALANCE_BASE",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=PERCENTAGE,
+    ),
+    ValloxExtendedSensorEntityDescription(
+        key="io_supply_fan",
+        name="Supply fan control output",
+        metric_key="A_CYC_IO_SUPPLY_FAN",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    ValloxExtendedSensorEntityDescription(
+        key="io_extract_fan",
+        name="Extract fan control output",
+        metric_key="A_CYC_IO_EXTRACT_FAN",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+)
+
 
 async def async_setup_entry(
     _hass, entry, async_add_entities: AddEntitiesCallback
@@ -151,6 +202,9 @@ async def async_setup_entry(
     )
     entities.extend(
         ValloxExtendedSensor(coordinator, desc) for desc in EFFICIENCY_SENSORS
+    )
+    entities.extend(
+        ValloxExtendedSensor(coordinator, desc) for desc in FAN_SENSORS
     )
     entities.extend(
         [
