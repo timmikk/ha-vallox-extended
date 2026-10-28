@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -17,6 +18,7 @@ from homeassistant.const import (
     REVOLUTIONS_PER_MINUTE,
     EntityCategory,
     UnitOfTemperature,
+    UnitOfTime,
 )
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -82,6 +84,16 @@ class ValloxExtendedVOCSensor(ValloxExtendedSensor):
         if val is None or val == 1000:
             return None
         return val
+
+
+class ValloxExtendedNextFilterChangeDateSensor(ValloxExtendedSensor):
+    """Sensor exposing next filter change date."""
+
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    @property
+    def native_value(self) -> date | None:
+        return self.coordinator.data.metric_data.next_filter_change_date
 
 
 class ValloxExtendedFaultCountSensor(ValloxExtendedSensor):
@@ -227,6 +239,41 @@ IAQ_SENSORS: tuple[ValloxExtendedSensorEntityDescription, ...] = (
     ),
 )
 
+MAINTENANCE_SENSORS: tuple[ValloxExtendedSensorEntityDescription, ...] = (
+    ValloxExtendedSensorEntityDescription(
+        key="remaining_time_for_filter",
+        name="Remaining time for filter",
+        metric_key="A_CYC_REMAINING_TIME_FOR_FILTER",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement="months",
+    ),
+    ValloxExtendedSensorEntityDescription(
+        key="filter_change_interval",
+        name="Filter change interval",
+        metric_key="A_CYC_FILTER_CHANGE_INTERVAL",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement="days",
+    ),
+    ValloxExtendedSensorEntityDescription(
+        key="current_uptime",
+        name="Current uptime",
+        metric_key="A_CYC_CURRENT_UP_TIME_HOURS",
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfTime.HOURS,
+    ),
+    ValloxExtendedSensorEntityDescription(
+        key="total_uptime",
+        name="Total uptime",
+        metric_key="A_CYC_TOTAL_UP_TIME_HOURS",
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfTime.HOURS,
+    ),
+)
+
 
 async def async_setup_entry(
     _hass, entry, async_add_entities: AddEntitiesCallback
@@ -257,6 +304,19 @@ async def async_setup_entry(
     )
     entities.extend(
         ValloxExtendedSensor(coordinator, desc) for desc in IAQ_SENSORS
+    )
+    entities.extend(
+        ValloxExtendedSensor(coordinator, desc) for desc in MAINTENANCE_SENSORS
+    )
+    entities.append(
+        ValloxExtendedNextFilterChangeDateSensor(
+            coordinator,
+            ValloxExtendedSensorEntityDescription(
+                key="next_filter_change_date",
+                name="Next filter change date",
+                device_class=SensorDeviceClass.DATE,
+            ),
+        )
     )
     entities.extend(
         [

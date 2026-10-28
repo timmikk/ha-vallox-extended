@@ -220,3 +220,59 @@ async def test_iaq_fitted_sensors(hass):
     state = hass.states.get("sensor.vallox_extended_voc_level")
     assert state is not None
     assert state.state == "150"
+
+
+@pytest.mark.asyncio
+async def test_filter_and_uptime_sensors(hass):
+    """Test filter change metrics, countdown, next date, and uptimes."""
+    mock_metrics = {key: 0 for key in ALLOWED_METRICS}
+    mock_metrics.update(
+        {
+            "A_CYC_REMAINING_TIME_FOR_FILTER": 2,
+            "A_CYC_FILTER_CHANGE_INTERVAL": 180,
+            "A_CYC_FILTER_CHANGED_YEAR": 26,
+            "A_CYC_FILTER_CHANGED_MONTH": 5,
+            "A_CYC_FILTER_CHANGED_DAY": 3,
+            "A_CYC_CURRENT_UP_TIME_HOURS": 4267,
+            "A_CYC_TOTAL_UP_TIME_HOURS": 5568,
+        }
+    )
+
+    client = type(
+        "Client",
+        (),
+        {
+            "fetch_metrics": AsyncMock(return_value=mock_metrics),
+        },
+    )()
+    entry = MockConfigEntry(domain=DOMAIN, data={CONF_HOST: "192.0.2.1"})
+    entry.add_to_hass(hass)
+
+    with patch("custom_components.vallox_extended.Vallox", return_value=client):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.vallox_extended_remaining_time_for_filter")
+    assert state is not None
+    assert state.state == "2"
+    assert state.attributes["unit_of_measurement"] == "months"
+
+    state = hass.states.get("sensor.vallox_extended_filter_change_interval")
+    assert state is not None
+    assert state.state == "180"
+    assert state.attributes["unit_of_measurement"] == "days"
+
+    # Next filter change date: 2026-05-03 + 180 days = 2026-10-30
+    state = hass.states.get("sensor.vallox_extended_next_filter_change_date")
+    assert state is not None
+    assert state.state == "2026-10-30"
+
+    state = hass.states.get("sensor.vallox_extended_current_uptime")
+    assert state is not None
+    assert state.state == "4267"
+    assert state.attributes["unit_of_measurement"] == "h"
+
+    state = hass.states.get("sensor.vallox_extended_total_uptime")
+    assert state is not None
+    assert state.state == "5568"
+    assert state.attributes["unit_of_measurement"] == "h"
