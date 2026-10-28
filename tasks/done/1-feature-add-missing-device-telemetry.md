@@ -1,7 +1,7 @@
 # Task: add missing device telemetry
 
 **Task:** #1
-**Status:** pending
+**Status:** done
 **Type:** feature
 **Complexity:** large
 **Mode:** assisted
@@ -10,7 +10,7 @@
 **Summary:** Expose all verified telemetry and data available on the home Vallox device
 **Host:** mankeli
 **Created:** 2026-10-27
-**Completed:** —
+**Completed:** 2026-10-28
 
 ## Context
 
@@ -35,9 +35,9 @@ This plan details expanding `ha-vallox-extended` to expose all verified data ava
 
 Expand the strict allowlist `ALLOWED_METRICS` to include all verified telemetry keys while continuing to reject credential, parental password, and undocumented raw configuration registers. Update `ValloxExtendedCoordinator` to use `MetricData` structures from `vallox_websocket_api` to support both dictionary metric lookups and helper property extraction (`profile`, `filter_change_date`, `cell_state`).
 
-- [ ] (auto) Expand `ALLOWED_METRICS` in `const.py` with confirmed device keys for temperatures, efficiencies, fan RPM, fan duty, filter timestamps, uptime, and modes.
-- [ ] (auto) Refactor `ValloxExtendedCoordinator` to return a structured snapshot combining the filtered metrics mapping with high-level `MetricData` properties.
-- [ ] (auto) Ensure protocol security posture is maintained: `A_CYC_MASTER_PASSWORD`, `A_CYC_PARENTAL_PASSWORD`, `A_CYC_USER_PASSWORD` remain strictly blocked.
+- [x] (auto) Expand `ALLOWED_METRICS` in `const.py` with confirmed device keys for temperatures, efficiencies, fan RPM, fan duty, filter timestamps, uptime, and modes.
+- [x] (auto) Refactor `ValloxExtendedCoordinator` to return a structured snapshot combining the filtered metrics mapping with high-level `MetricData` properties.
+- [x] (auto) Ensure protocol security posture is maintained: `A_CYC_MASTER_PASSWORD`, `A_CYC_PARENTAL_PASSWORD`, `A_CYC_USER_PASSWORD` remain strictly blocked.
 
 ### 2. Add Dual Heat-Recovery Efficiencies & Temperature Sensors
 **Files:** `custom_components/vallox_extended/sensor.py`, `strings.json`, `tests/`
@@ -48,10 +48,10 @@ Add sensor definitions for all 5 validated air stream temperatures and dual heat
 - Optional duct sensor: `A_CYC_TEMP_OPTIONAL` (guard: report `None`/unavailable if <= -40.0 °C when disconnected).
 - Efficiencies: Supply heat recovery efficiency (`A_CYC_SUPPLY_EFFICIENCY`) and Extract heat recovery efficiency (`A_CYC_EXTRACT_EFFICIENCY`).
 
-- [ ] (auto) Add `SensorEntityDescription` definitions with `SensorDeviceClass.TEMPERATURE` and `SensorStateClass.MEASUREMENT` for all 5 air temperatures.
-- [ ] (auto) Add optional temperature sensor with unplugged detection (<= -40 °C).
-- [ ] (auto) Add supply and extract efficiency sensors with unit `%` and `SensorStateClass.MEASUREMENT`.
-- [ ] (auto) Add unit tests validating normal readings, boundary temperatures, and unplugged optional sensor.
+- [x] (auto) Add `SensorEntityDescription` definitions with `SensorDeviceClass.TEMPERATURE` and `SensorStateClass.MEASUREMENT` for all 5 air temperatures.
+- [x] (auto) Add optional temperature sensor with unplugged detection (<= -40 °C).
+- [x] (auto) Add supply and extract efficiency sensors with unit `%` and `SensorStateClass.MEASUREMENT`.
+- [x] (auto) Add unit tests validating normal readings, boundary temperatures, and unplugged optional sensor.
 
 ### 3. Add Fan Telemetry, Duty, and Balance Sensors
 **Files:** `custom_components/vallox_extended/sensor.py`, `strings.json`, `tests/`
@@ -65,9 +65,9 @@ Expose the unit's fan operation metrics:
 - Extract fan balance base: `A_CYC_EXTR_FAN_BALANCE_BASE` (%).
 - IO motor control duties: `A_CYC_IO_SUPPLY_FAN` and `A_CYC_IO_EXTRACT_FAN` (diagnostic sensors).
 
-- [ ] (auto) Add measurement sensors for fan speed (%) and RPMs (`rpm`, `SensorDeviceClass.SPEED` or numeric measurement).
-- [ ] (auto) Add diagnostic sensors for fan balance base percentages and raw IO fan control values.
-- [ ] (auto) Add unit tests for fan metrics and null handling.
+- [x] (auto) Add measurement sensors for fan speed (%) and RPMs (`rpm`, `SensorDeviceClass.SPEED` or numeric measurement).
+- [x] (auto) Add diagnostic sensors for fan balance base percentages and raw IO fan control values.
+- [x] (auto) Add unit tests for fan metrics and null handling.
 
 ### 4. Add Air Quality & Humidity Sensors
 **Files:** `custom_components/vallox_extended/sensor.py`, `tests/`
@@ -78,9 +78,9 @@ Add environmental monitoring:
 - Relative humidity baseline: `A_CYC_RH_BASIC_LEVEL` (%).
 - Capability-gated CO2 & VOC: Device inspection shows CO2 is 0 and VOC is 1000 without fitted physical sensors. Gate CO2 and VOC entities so they only create/populate if confirmed installed or valid non-placeholder values exist.
 
-- [ ] (auto) Implement `humidity` and `humidity_basic_level` sensor entities.
-- [ ] (auto) Add capability detection to omit or mark unavailable unfitted CO2 (`A_CYC_CO2_VALUE == 0`) and unconfirmed VOC sensors.
-- [ ] (auto) Add unit tests covering installed vs absent IAQ sensor scenarios.
+- [x] (auto) Implement `humidity` and `humidity_basic_level` sensor entities.
+- [x] (auto) Add capability detection to omit or mark unavailable unfitted CO2 (`A_CYC_CO2_VALUE == 0`) and unconfirmed VOC sensors.
+- [x] (auto) Add unit tests covering installed vs absent IAQ sensor scenarios.
 
 ### 5. Add Filter Lifecycle & System Uptime Telemetry
 **Files:** `custom_components/vallox_extended/sensor.py`, `date.py`, `tests/`
@@ -94,10 +94,10 @@ Expose filter maintenance and machine longevity:
 - Current uptime: `A_CYC_CURRENT_UP_TIME_HOURS` (hours, `SensorDeviceClass.DURATION`).
 - Total machine uptime: `A_CYC_TOTAL_UP_TIME_HOURS` + `_YEARS` (total hours, `SensorStateClass.TOTAL_INCREASING`).
 
-- [ ] (auto) Add `remaining_time_for_filter` sensor (months).
-- [ ] (auto) Implement `filter_change_date` and `next_filter_change_date` entities.
-- [ ] (auto) Add `current_uptime` and `total_uptime` sensors with `duration` device class and `TOTAL_INCREASING` state class where appropriate.
-- [ ] (auto) Add unit tests for date calculation and leap-year/null handling.
+- [x] (auto) Add `remaining_time_for_filter` sensor (months).
+- [x] (auto) Implement `filter_change_date` and `next_filter_change_date` entities.
+- [x] (auto) Add `current_uptime` and `total_uptime` sensors with `duration` device class and `TOTAL_INCREASING` state class where appropriate.
+- [x] (auto) Add unit tests for date calculation and leap-year/null handling.
 
 ### 6. Add Mode & Heating Operation Diagnostics
 **Files:** `custom_components/vallox_extended/{sensor,binary_sensor}.py`, `tests/`
@@ -110,10 +110,10 @@ Expose machine operating modes and heating adjustments:
 - Post-heater winter setpoint: `A_CYC_POST_HEATER_WINTER_SETPOINT` (°C).
 - Detailed active alarms sensor / attributes mapping from `MetricData.get_alarms()`.
 
-- [ ] (auto) Add enum/string diagnostic sensors for supply heating adjust mode and defrost mode.
-- [ ] (auto) Add diagnostic sensors for defrost limit and post-heater winter setpoints.
-- [ ] (auto) Add rich alarm attribute representation to `fault_active` entity.
-- [ ] (auto) Add unit tests for mode enum decoding and alarm parsing.
+- [x] (auto) Add enum/string diagnostic sensors for supply heating adjust mode and defrost mode.
+- [x] (auto) Add diagnostic sensors for defrost limit and post-heater winter setpoints.
+- [x] (auto) Add rich alarm attribute representation to `fault_active` entity.
+- [x] (auto) Add unit tests for mode enum decoding and alarm parsing.
 
 ### 7. Add Profile Telemetry & Standalone Control Surface
 **Files:** `custom_components/vallox_extended/{sensor,fan,number,switch}.py`, `__init__.py`
@@ -126,29 +126,29 @@ Enable `ha-vallox-extended` to optionally act as the complete standalone Vallox 
 - Profile temperature setpoint numbers: `number.supply_air_target_{home,away,boost}` (5.0 °C to 25.0 °C).
 - Fan entity: `fan.vallox_extended` with preset modes (Home, Away, Boost, Fireplace) and percentage control.
 
-- [ ] (auto) Add `current_profile` and `profile_duration` sensor entities.
-- [ ] (auto) Implement `switch.py` with `ValloxExtendedBypassLockedSwitch`.
-- [ ] (auto) Implement `number.py` for profile supply air target temperatures.
-- [ ] (auto) Implement `fan.py` with `ValloxExtendedFan` exposing profile presets.
-- [ ] (auto) Register `Platform.FAN`, `Platform.NUMBER`, `Platform.SWITCH`, `Platform.DATE` in `PLATFORMS`.
-- [ ] (auto) Add unit tests for fan control, number writes, and switch toggles.
+- [x] (auto) Add `current_profile` and `profile_duration` sensor entities.
+- [x] (auto) Implement `switch.py` with `ValloxExtendedBypassLockedSwitch`.
+- [x] (auto) Implement `number.py` for profile supply air target temperatures.
+- [x] (auto) Implement `fan.py` with `ValloxExtendedFan` exposing profile presets.
+- [x] (auto) Register `Platform.FAN`, `Platform.NUMBER`, `Platform.SWITCH`, `Platform.DATE` in `PLATFORMS`.
+- [x] (auto) Add unit tests for fan control, number writes, and switch toggles.
 
 ### 8. Verification, Testing & Live Validation
 **Files:** `tests/`, `fixtures/`
 **Host impact:** Validation against live device and mock test suite
 
-- [ ] (auto) Run `uv run --with-requirements requirements_test.txt pytest` to achieve 100% test pass on all new entities.
-- [ ] (auto) Run live query test against `192.168.16.10` to verify coordinator refresh and entity value extraction.
-- [ ] (auto) Verify `hacs.json` and `manifest.json` compliance with Home Assistant 2024 standards.
+- [x] (auto) Run `uv run --with-requirements requirements_test.txt pytest` to achieve 100% test pass on all new entities.
+- [x] (auto) Run live query test against `192.168.16.10` to verify coordinator refresh and entity value extraction.
+- [x] (auto) Verify `hacs.json` and `manifest.json` compliance with Home Assistant 2024 standards.
 
 ### 9. Documentation & Release Notes
 **Files:** `README.md`, `CHANGELOG.md`, `info.md`
 **Host impact:** Updated documentation and release notes
 
-- [ ] (auto) Update `README.md` to document the complete entity catalog (telemetry, diagnostics, controls).
-- [ ] (auto) Update `info.md` with standalone vs co-existence notes.
-- [ ] (auto) Add entries to `CHANGELOG.md` detailing all added entities.
-- [ ] (auto) Run `node ~/dev/dev-tools/scripts/todo-status.mjs --write` to sync `TODO.md`.
+- [x] (auto) Update `README.md` to document the complete entity catalog (telemetry, diagnostics, controls).
+- [x] (auto) Update `info.md` with standalone vs co-existence notes.
+- [x] (auto) Add entries to `CHANGELOG.md` detailing all added entities.
+- [x] (auto) Run `node ~/dev/dev-tools/scripts/todo-status.mjs --write` to sync `TODO.md`.
 
 ---
 
@@ -169,19 +169,19 @@ Enable `ha-vallox-extended` to optionally act as the complete standalone Vallox 
 
 ## Validation
 
-- [ ] `uv run --with-requirements requirements_test.txt pytest` passes completely.
-- [ ] Test coverage includes valid telemetry, boundary conditions, unplugged sensors, and coordinator error handling.
-- [ ] Live integration test against `192.168.16.10` verifies all entity states without exceptions.
-- [ ] Hassfest / HACS validation passes cleanly.
+- [x] `uv run --with-requirements requirements_test.txt pytest` passes completely.
+- [x] Test coverage includes valid telemetry, boundary conditions, unplugged sensors, and coordinator error handling.
+- [x] Live integration test against `192.168.16.10` verifies all entity states without exceptions.
+- [x] Hassfest / HACS validation passes cleanly.
 
 ---
 
 ## Documentation updates
 
-- [ ] Update `README.md` with supported sensors, entities, and configuration guidance.
-- [ ] Update `info.md` for HACS UI display.
-- [ ] Update `CHANGELOG.md` with release version and changes.
-- [ ] Run `node ~/dev/dev-tools/scripts/todo-status.mjs --write` to update `TODO.md` and `NEEDS-FROM-YOU.md`.
+- [x] Update `README.md` with supported sensors, entities, and configuration guidance.
+- [x] Update `info.md` for HACS UI display.
+- [x] Update `CHANGELOG.md` with release version and changes.
+- [x] Run `node ~/dev/dev-tools/scripts/todo-status.mjs --write` to update `TODO.md` and `NEEDS-FROM-YOU.md`.
 
 ---
 
@@ -203,8 +203,17 @@ Enable `ha-vallox-extended` to optionally act as the complete standalone Vallox 
 
 ## Definition of done
 
-- [ ] All work items above are checked off.
-- [ ] All data available on the home Vallox device is mapped and verified.
-- [ ] Strict allowlist prevents leaking credentials or undefined registers.
-- [ ] Test suite passes with full coverage.
-- [ ] Documentation and HACS metadata are up to date.
+- [x] All work items above are checked off.
+- [x] All data available on the home Vallox device is mapped and verified.
+- [x] Strict allowlist prevents leaking credentials or undefined registers.
+- [x] Test suite passes with full coverage.
+- [x] Documentation and HACS metadata are up to date.
+
+---
+
+## Execution log
+
+- **Tried**: Inspected live device registers on `192.168.16.10` and compared against stock `vallox` integration.
+- **Observed**: Identified missing data: supply efficiency (91%), dual fan RPM (1703 / 1894 rpm), fan balance percentages, IO motor duties, filter change date, uptime (4267 h / 5568 h), modes, alarms, and control capabilities.
+- **Decided**: Implemented comprehensive allowlist expansion, structured `ValloxExtendedData`, temperature sensors with unplugged guard, dual efficiencies, fan telemetry, capability-gated IAQ, filter lifecycle date/sensors, mode diagnostics, rich alarms, and full control platforms (`date`, `switch`, `number`, `fan`).
+- **Observed**: 14/14 automated tests passed; verified live connection and entity mapping against real device at `192.168.16.10`.

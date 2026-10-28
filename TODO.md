@@ -15,9 +15,3 @@ are read straight from the file. Entries are grouped by Category (fixed order fr
 
 ---
 
-## Telemetry
-
-- [ ] **#1 add missing device telemetry** — Expose all verified telemetry and
-  data available on the home Vallox device
-  `tasks/1-feature-add-missing-device-telemetry.md`
-  **Status:** pending | **Priority:** medium | **Size:** L | **Mode:** assisted | **Host:** mankeli
